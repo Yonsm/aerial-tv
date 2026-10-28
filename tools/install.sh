@@ -8,7 +8,7 @@
 #   TV=<tv-ip> tools/install.sh lite          # Aerial Lite; chosen by itself on Android 4.0-4.4,
 #                                             # refused on 5.0+ (FORCE_LITE=1 to try it there)
 #
-# The APK comes from the latest release (aerial.qust.me's copy, else GitHub): needs adb, curl
+# The APK comes from the latest release (GitHub Pages mirror, else GitHub): needs adb, curl
 # and unzip to check the download (and python3 on TCL TVs).
 #   BUILD=1        build it from this checkout instead (JDK 17 + Android SDK)
 #   APK_FILE=<apk> install this file instead
@@ -32,7 +32,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 : "${TV:?set TV to the TV IP address, e.g. TV=<tv-ip> $0}"
-REPO=pengchujin/aerial-tv
+REPO=Yonsm/aerial-tv
 command -v adb >/dev/null || { echo "adb not found. macOS: brew install android-platform-tools; Linux: install android-tools / adb." >&2; exit 1; }
 FLAVOR="${1:-standard}"
 case "$FLAVOR" in standard|guard|repair|lite) ;; *) echo "flavor must be standard, guard or lite (or repair)" >&2; exit 1 ;; esac
@@ -171,7 +171,7 @@ download_apk() (
   command -v unzip >/dev/null || { echo "unzip is required to check downloaded APKs. Install unzip and run again." >&2; return 1; }
   partial=$(mktemp "${TMPDIR:-/tmp}/aerial-$flavor.XXXXXX") || return 1
   trap 'rm -f "$partial"' EXIT
-  for url in "https://aerial.qust.me/download/aerial-$flavor.apk" \
+  for url in "https://${REPO%%/*}.github.io/${REPO#*/}/download/aerial-$flavor.apk" \
              "https://github.com/$REPO/releases/latest/download/aerial-$flavor.apk"; do
     echo "Downloading $url" >&2
     if curl -fL --progress-bar --connect-timeout 10 -o "$partial" "$url"; then
