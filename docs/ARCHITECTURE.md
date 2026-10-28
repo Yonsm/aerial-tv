@@ -185,14 +185,16 @@ NanoHTTPD 监听 8790 端口，路径前缀是 8 位随机令牌（每次打开�
 
 控制中心「有新版本」→ 升级页：
 
+- **版本来源**：读取 `https://api.github.com/repos/Yonsm/aerial-tv/releases/latest` 的 `tag_name`（数字版本，可带 `v` 前缀）。使用独立的 `updates_yonsm` 偏好文件，避免沿用上游缓存。
+
 - **旧固件存储权限**：Android 6 上只有外部更新目录不可写、且缺少读或写存储权限时，才请求两项权限；允许后再点一次「下载并安装」。声明限制到 API 23，Android 7 及以后继续用内部缓存，不请求存储权限。MiTV4-ANSM0（Android 6.0.1）独立 release 测试工具验证：仅授予写权限仍无法创建目录，同时授予读、写权限后可写入官方 1.56 APK，系统安装器可解析并显示更新确认页；该安装器没有接收 `content://` APK 的入口，因此保留旧系统的外部缓存 + `file://` 路径。尚未用官方签名的新版本验证完整覆盖升级。
 
-- **下载并安装**：先从官网 `download/aerial-<flavor>.apk` 下载，失败再从 GitHub `releases/latest/download`（不用第三方 GitHub 代理）。下载后检查包名、签名（和这台电视上的 Aerial 比）和 versionCode，不对就不打开安装器，并在页上说明原因（`Updates.Failure`）。改过包名的版本（OPPO）不显示按钮。
+- **下载并安装**：从 `https://github.com/Yonsm/aerial-tv/releases/latest/download/aerial-<flavor>.apk` 下载。下载后检查包名、签名（和这台电视上的 Aerial 比）和 versionCode，不对就不打开安装器，并在页上说明原因（`Updates.Failure`）。改过包名的版本（OPPO）不显示按钮。
 - **旧系统更新 TLS**（#871）：Android 5.0–6.0 的版本检查和 APK 下载连接用 `LegacyUpdateTls`，在系统根证书之外额外信任随包的 ISRG Root X1（`raw/isrg_root_x1.pem`，来源 `https://letsencrypt.org/certs/isrgrootx1.pem`，DER SHA-256 `96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6`）。只给这两个更新连接设置 socket factory，不改全局默认值、主机名校验或其他网络功能，Android 7 起沿用系统设置。MiTV4-ANSM0 / Android 6.0.1 上以 ADB shell 运行生产信任管理代码对比：官网版本地址两者均 HTTP 200；GitHub APK 跳到 `release-assets.githubusercontent.com` 后，系统信任库报缺少根证书，补充后 HTTP 200 并能读取 APK 数据。没有用本地签名覆盖电视上的官方 Aerial，完整应用内覆盖升级仍需官方签名版本验证。
 - **安卓 13 及以上先用安装会话**（`Updates.installBySession`，#723）：`ACTION_VIEW` 的安装在安卓 13 起记成本地文件（`packageSource=3`），系统把 `ACCESS_RESTRICTED_SETTINGS` 设成 deny，TCL T966D5（安卓 14）上守护随之被关。会话声明 `PACKAGE_SOURCE_OTHER`，系统照样弹确认（`UpdateResult` 收到 `STATUS_PENDING_USER_ACTION` 后打开确认页）；会话失败时退回下面的 `ACTION_VIEW`。已经是 deny 的不会因为后来的升级变回 allow，要 `appops set app.orchard.tv ACCESS_RESTRICTED_SETTINGS allow`。安卓 13 TV 模拟器上验证过。
 - **交给系统安装器**（安卓 12 及以下）：用 `ACTION_VIEW` + FileProvider（`res/xml/update_files.xml`，Android 7 以下用 `file://`）打开系统安装器，不用 PackageInstaller session：TCL 的安装校验只放行由 `com.android.packageinstaller` 发起的安装，`ACTION_VIEW` 时发起者就是系统安装器（和当贝一样）。要 `REQUEST_INSTALL_PACKAGES`：小米有「安装未知应用」设置页，没开时跳过去；TCL 没有这个页面，靠 `install.sh` 用 `appops set … REQUEST_INSTALL_PACKAGES allow` 放行。
 - **装完回到 Aerial**：安装会杀掉 Aerial 的任务，露出底下的东西（小米上是 PatchWall 的详情页，不是原桌面的 HOME Activity，守护原来的规则不管）。所以打开安装器前记下时间（`GuardSetup.noteInstallerOpened`，用 commit 立刻写盘），新进程的守护在 15 分钟内看到原桌面的任意页面就拉回 Aerial；在安装器里取消、回到 Aerial 时清掉这个记录。
-- **二维码**：装不上的电视（以及 1.31 及以前的版本）还是要再运行一次安装命令。升级页不再显示长命令，而是一个二维码，打开 `https://aerial.qust.me/update/#v=…&f=…&tv=<局域网IP>`（参数放在 `#` 后面，浏览器不会发给服务器），页面上先是 Agent 提示词，再是电视上的按钮说明和可复制的安装命令。
+- **二维码**：升级页打开 `https://github.com/Yonsm/aerial-tv/releases/latest`，用户可查看发布说明和下载 APK。
 - 测试：`ConfigReceiver --ez check_update true` 立刻检查新版本；`--ez update_test true` 让「下载并安装」改用 `Android/data/app.orchard.tv/files/update-test.apk`（到 Aerial 重启为止），发版前就能测整条流程。做法：装一个只把 `versionName` 改低的包，推一个带新代码的包当 update-test.apk。
 
 ## 诊断报告（system/Diagnostics.kt）

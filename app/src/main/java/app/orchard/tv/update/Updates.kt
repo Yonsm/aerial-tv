@@ -27,14 +27,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 /**
  * Whether a newer release is out (issues #24, #76). Most owners stay on the version they installed
- * and report bugs fixed long ago. Aerial reads the latest release's tag from the
- * website (reachable in China, unlike GitHub); Control Center then names the new version and says
+ * and report bugs fixed long ago. Aerial reads the latest release's tag from the fork's GitHub
+ * Releases API; Control Center then names the new version and says
  * how to update. Nothing is downloaded or installed in the background: only when the owner picks
  * "Download and Install" does Aerial fetch the new APK and hand it to the system installer
  * ([install]).
@@ -44,8 +45,10 @@ import java.net.URL
  */
 object Updates {
     private const val TAG = "AerialUpdates"
-    private const val PREFS = "updates"
-    private const val VERSION_URL = "https://aerial.qust.me/download/version.txt"
+    // Keep this fork's version cache separate from the upstream update source.
+    private const val PREFS = "updates_yonsm"
+    const val RELEASES_URL = "https://github.com/Yonsm/aerial-tv/releases/latest"
+    private const val VERSION_URL = "https://api.github.com/repos/Yonsm/aerial-tv/releases/latest"
 
     /**
      * A source that delivers less than [STALL_BYTES] in [STALL_MS] is given up for the next one
@@ -79,7 +82,7 @@ object Updates {
         checker = UpdateCheck(
             scope = scope,
             lastSuccess = { prefs.getLong("checked_at", 0) },
-            read = { withContext(Dispatchers.IO) { read(VERSION_URL) } },
+            read = { withContext(Dispatchers.IO) { JSONObject(read(VERSION_URL)).getString("tag_name").trim().removePrefix("v") } },
             save = { latest, checkedAt ->
                 prefs.edit { putString("latest", latest); putLong("checked_at", checkedAt) }
                 available = latest.takeIf { newer(it, current) }
@@ -151,13 +154,13 @@ object Updates {
     }
 
     enum class Failure {
-        /** Neither the website nor GitHub gave a complete APK. */
+        /** GitHub did not give a complete APK. */
         Download,
         /** The TV lets no app hand an APK to its installer, or has no installer to hand it to. */
         Blocked,
         /** This copy is not the official package or not signed with the official key. */
         NotOfficial,
-        /** The downloaded APK is no newer than this one (the website not yet updated). */
+        /** The downloaded APK is older than this build. */
         NotNewer,
     }
 
@@ -314,7 +317,7 @@ object Updates {
      */
     @Volatile var testApk: File? = null
 
-    /** The website first (reachable in China), then GitHub. Returns the APK's info once it parses. */
+    /** Downloads from this fork's release. Returns the APK's info once it parses. */
     private suspend fun downloadFrom(context: Context, file: File): PackageInfo? {
         testApk?.takeIf { it.isFile }?.let { test ->
             file.parentFile?.mkdirs()
@@ -324,8 +327,7 @@ object Updates {
         }
         val name = "aerial-${BuildConfig.FLAVOR}.apk"
         val sources = listOf(
-            "https://aerial.qust.me/download/$name",
-            "https://github.com/pengchujin/aerial-tv/releases/latest/download/$name",
+            "$RELEASES_URL/download/$name",
         )
         for (url in sources) {
             val ok = runCatching { download(url, file) }

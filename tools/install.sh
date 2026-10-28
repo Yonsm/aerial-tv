@@ -8,8 +8,8 @@
 #   TV=<tv-ip> tools/install.sh lite          # Aerial Lite; chosen by itself on Android 4.0-4.4,
 #                                             # refused on 5.0+ (FORCE_LITE=1 to try it there)
 #
-# The APK comes from the latest release (aerial.qust.me's copy, else GitHub), so only adb is needed
-# (and python3 on TCL TVs).
+# The APK comes from the latest release (GitHub Pages mirror, else GitHub Release), so only adb is
+# needed (and python3 on TCL TVs).
 #   BUILD=1        build it from this checkout instead (JDK 17 + Android SDK)
 #   APK_FILE=<apk> install this file instead
 #   STAY_CONNECTED=1  stay connected to the TV afterwards (otherwise adb lets go of it at the end)
@@ -32,7 +32,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 : "${TV:?set TV to the TV IP address, e.g. TV=<tv-ip> $0}"
-REPO=pengchujin/aerial-tv
+REPO=Yonsm/aerial-tv
 command -v adb >/dev/null || { echo "adb not found. macOS: brew install android-platform-tools; Linux: install android-tools / adb." >&2; exit 1; }
 FLAVOR="${1:-standard}"
 case "$FLAVOR" in standard|guard|repair|lite) ;; *) echo "flavor must be standard, guard or lite (or repair)" >&2; exit 1 ;; esac
@@ -179,7 +179,7 @@ if [ "$FLAVOR" = lite ] || [ "$OLD_ANDROID" = 1 ]; then
   elif [ "${BUILD:-0}" = 1 ]; then ./gradlew -q --console=plain :lite:assembleRelease; APK=lite/build/outputs/apk/release/lite-release.apk
   else
     APK="${TMPDIR:-/tmp}/aerial-lite.apk"
-    for url in "https://aerial.qust.me/download/aerial-lite.apk" "https://github.com/$REPO/releases/latest/download/aerial-lite.apk" ""; do
+    for url in "https://${REPO%%/*}.github.io/${REPO#*/}/download/aerial-lite.apk" "https://github.com/$REPO/releases/latest/download/aerial-lite.apk" ""; do
       [ -n "$url" ] || { echo "Could not download aerial-lite.apk" >&2; exit 1; }
       echo "Downloading $url" >&2
       curl -fL --progress-bar --connect-timeout 10 -o "$APK" "$url" && break
@@ -220,7 +220,7 @@ build() {
     echo "app/build/outputs/apk/$flavor/release/app-$flavor-release.apk"
   else
     local out="${TMPDIR:-/tmp}/aerial-$flavor.apk" url
-    for url in "https://aerial.qust.me/download/aerial-$flavor.apk" \
+    for url in "https://${REPO%%/*}.github.io/${REPO#*/}/download/aerial-$flavor.apk" \
                "https://github.com/$REPO/releases/latest/download/aerial-$flavor.apk"; do
       echo "Downloading $url" >&2
       if curl -fL --progress-bar --connect-timeout 10 -o "$out" "$url"; then echo "$out"; return; fi
