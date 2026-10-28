@@ -53,18 +53,18 @@ object LiteSettings {
     private var chosenFocusStyle = FocusStyle.HighContrast
     /** As chosen; always the white frame in Elders mode (Kids), as in the full app. */
     val focusStyle: FocusStyle get() = if (Kids.active && Kids.kind == KidsKind.Elders) FocusStyle.HighContrast else chosenFocusStyle
-    var oneRowHome = true; private set
+    var oneRowHome = false; private set
     var peekNextRow = true; private set
     /** Apps a row on Home and in folders, as the full app's: four, five or six. */
     private var chosenColumns = 5
     /** As chosen; [Kids.COLUMNS] in Kids and Elders mode. */
     val homeColumns: Int get() = if (Kids.active) Kids.COLUMNS else chosenColumns
-    var homePlate = true; private set
-    private var chosenAllNames = false
+    var homePlate = false; private set
+    private var chosenAllNames = true
     /** As chosen; every name in Elders mode. */
     val showAllNames: Boolean get() = chosenAllNames || (Kids.active && Kids.kind == KidsKind.Elders)
     var clockRight = false; private set
-    var largeClock = false; private set
+    var largeClock = true; private set
     var clockHours = ClockHours.System; private set
     /** No app menus on Home or in folders, as the full app's homeLocked (issues #717 #1013 #1106). */
     var homeLocked = false; private set
@@ -95,13 +95,13 @@ object LiteSettings {
         if (::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         chosenFocusStyle = FocusStyle.of(prefs.getString("focus_style", null))
-        oneRowHome = prefs.getBoolean("one_row_home", true)
+        oneRowHome = prefs.getBoolean("one_row_home", false)
         peekNextRow = prefs.getBoolean("peek_next_row", true)
         chosenColumns = prefs.getInt("home_columns", 5).takeIf { it in HOME_COLUMNS } ?: 5
-        homePlate = prefs.getBoolean("home_plate", true)
-        chosenAllNames = prefs.getBoolean("show_all_names", false)
+        homePlate = prefs.getBoolean("home_plate", false)
+        chosenAllNames = prefs.getBoolean("show_all_names", true)
         clockRight = prefs.getBoolean("clock_right", false)
-        largeClock = prefs.getBoolean("large_clock", false)
+        largeClock = prefs.getBoolean("large_clock", true)
         clockHours = ClockHours.of(prefs.getString("clock_hours", null))
         homeLocked = prefs.getBoolean("home_locked", false)
         photoMinutes = prefs.getInt("photo_minutes", DAY_MINUTES).takeIf { it in PHOTO_MINUTES } ?: DAY_MINUTES
