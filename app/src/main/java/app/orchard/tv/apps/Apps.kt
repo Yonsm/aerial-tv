@@ -250,7 +250,7 @@ object AppCatalog {
                 val home = info.packageName in stockHomes
                 val later = whole != null && info.packageName !in whole
                 async {
-                    runCatching { entry(pm, info, leanback, byCategory, home, later) }
+                    runCatching { entry(context, pm, info, leanback, byCategory, home, later) }
                         .onFailure { Log.w(TAG, "left ${info.packageName} out of Home", it) }
                         .getOrNull()?.let { if (home) it.copy(label = homeLabel) else it }
                 }
@@ -387,6 +387,7 @@ object AppCatalog {
     }.getOrNull()
 
     private fun entry(
+        context: Context,
         pm: PackageManager, info: ActivityInfo, leanback: Boolean, byCategory: Map<String, SystemTile>,
         stockHome: Boolean = false, later: Boolean = false,
     ): AppEntry {
@@ -431,7 +432,8 @@ object AppCatalog {
                     custom != null -> TileArtFactory.fromBanner(android.graphics.drawable.BitmapDrawable(android.content.res.Resources.getSystem(), custom))
                     library != null -> TileArtFactory.fromBanner(android.graphics.drawable.BitmapDrawable(android.content.res.Resources.getSystem(), library))
                     own != null -> TileArtFactory.forSystem(own)
-                    else -> fromApp(pm, info, banner, recipe)
+                    else -> (if (IconLibrary.pick(pkg) != IconLibrary.Pick.Own) bundledTile(context, pkg) else null)
+                        ?: fromApp(pm, info, banner, recipe)
                 }
             }.recoverCatching {
                 Log.w(TAG, "could not draw the tile of $pkg; using its icon", it)
@@ -445,5 +447,12 @@ object AppCatalog {
         }
         val removable = !system
         return AppEntry(pkg, label, ComponentName(pkg, info.name), leanback, removable, art)
+    }
+    /** Branded replacements for APK icons that otherwise have no TV banner or library picture. */
+    private fun bundledTile(context: Context, pkg: String): TileArt? = when (pkg) {
+        "blbl.cat3399", "org.smarttube.stable" -> context.assets.open("icon-library/$pkg.png").use {
+            TileArtFactory.fromBanner(android.graphics.drawable.BitmapDrawable(context.resources, android.graphics.BitmapFactory.decodeStream(it)))
+        }
+        else -> null
     }
 }
