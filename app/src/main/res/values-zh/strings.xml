@@ -323,4 +323,12 @@
     <string name="kids_blocked">「%s」不在这个模式里</string>
     <string name="kids_warn">还能看 %d 分钟</string>
     <string name="kids_warn_break">%d 分钟后休息一下</string>
+    <string name="app_name_iqiyi">爱奇艺果</string>
+    <string name="app_name_youku">优酷酷喵</string>
+    <string name="app_name_bilibili_tv">哔哩云视</string>
+    <string name="app_name_blbl">哔哩哔哩</string>
+    <string name="app_name_youtube">油管视频</string>
+    <string name="app_name_smarttube">智能油管</string>
+    <string name="app_name_fongmi">蜂蜜影视</string>
+    <string name="app_name_tvbox">宝盒影视</string>
 </resources>

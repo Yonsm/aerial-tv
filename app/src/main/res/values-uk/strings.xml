@@ -316,4 +316,12 @@
     <string name="kids_blocked">«%s» тут недоступний</string>
     <string name="kids_warn">Лишилося %d хв</string>
     <string name="kids_warn_break">Перерва за %d хв</string>
+    <string name="app_name_iqiyi"></string>
+    <string name="app_name_youku"></string>
+    <string name="app_name_bilibili_tv"></string>
+    <string name="app_name_blbl"></string>
+    <string name="app_name_youtube"></string>
+    <string name="app_name_smarttube"></string>
+    <string name="app_name_fongmi"></string>
+    <string name="app_name_tvbox"></string>
 </resources>

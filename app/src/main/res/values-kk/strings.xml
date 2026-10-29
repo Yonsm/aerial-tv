@@ -316,4 +316,12 @@
     <string name="kids_blocked">«%s» мұнда қолжетімсіз</string>
     <string name="kids_warn">%d мин қалды</string>
     <string name="kids_warn_break">%d минуттан кейін үзіліс</string>
+    <string name="app_name_iqiyi"></string>
+    <string name="app_name_youku"></string>
+    <string name="app_name_bilibili_tv"></string>
+    <string name="app_name_blbl"></string>
+    <string name="app_name_youtube"></string>
+    <string name="app_name_smarttube"></string>
+    <string name="app_name_fongmi"></string>
+    <string name="app_name_tvbox"></string>
 </resources>
