@@ -11,6 +11,7 @@ import androidx.core.content.getSystemService
 import app.orchard.tv.apps.AppCatalog
 import app.orchard.tv.apps.FOLDER_KEY_PREFIX
 import app.orchard.tv.apps.AppEntry
+import app.orchard.tv.apps.AppLabels
 import app.orchard.tv.apps.AppNames
 import app.orchard.tv.apps.CustomIcons
 import app.orchard.tv.apps.IconLibrary
@@ -214,7 +215,11 @@ class PhoneServer private constructor(private val context: Context, private val 
             .put("apps", JSONArray().apply {
                 // Pinned inputs first, then apps by the name Home shows. [default] is the name a
                 // blank one goes back to; [name] is the one typed on this page, if any.
-                val apps = AppCatalog.loaded.map { it to (AppNames.of(it.key) ?: it.label) }.sortedBy { it.second }
+                val apps = AppCatalog.loaded.map { it to (AppNames.of(it.key) ?: it.label) }
+                    .sortedWith { left, right ->
+                        AppLabels.comparator.compare(left.second, right.second).takeUnless { it == 0 }
+                            ?: left.first.key.compareTo(right.first.key)
+                    }
                 AppCatalog.pinnedSources.forEach { a ->
                     val src = a.source ?: return@forEach
                     // An input's label as Home will show it once it has arranged the new look.
