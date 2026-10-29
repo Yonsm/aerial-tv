@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.Collator
 
 /** A folder on Home, as on tvOS: a tile in the grid that opens to show the apps put in it. */
 data class Folder(val id: String, val name: String, val apps: List<String>) {
@@ -207,6 +208,17 @@ class LayoutStore(context: Context) {
 }
 
 /** First-run arrangement: streaming apps first, the TV's own utilities last. */
+
+/** Display-name order for apps that have no stronger placement rule. */
+internal object AppLabels {
+    private val collator = object : ThreadLocal<Collator>() {
+        override fun initialValue() = Collator.getInstance()
+    }
+    val comparator = Comparator<String> { left, right ->
+        collator.get()!!.compare(left, right).takeUnless { it == 0 } ?: left.compareTo(right)
+    }
+}
+
 private object Defaults {
     private val preferred = listOf(
         "com.ktcp.video",                  // 云视听极光
@@ -238,8 +250,8 @@ private object Defaults {
         { preferred.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } },
         { if (it.key in utilities || it.key.startsWith("com.android.")) 1 else 0 },
         { utilities.indexOf(it.key) },
-        { it.label.lowercase() },
-    )
+    ).thenComparator { left, right -> AppLabels.comparator.compare(left.label, right.label) }
+        .thenBy { it.key }
 
     fun hidden(installed: Set<String>): Set<String> = buildSet {
         // Xiaomi's own settings app covers everything AOSP settings does, and more.
