@@ -74,13 +74,13 @@ class LayoutStoreTest {
         assertEquals(listOf("test.d", "test.a", "test.b", "test.c"), LayoutStore(context).home())
     }
 
-    @Test fun newAppsJoinAtTheEndAndMissingOnesKeepTheirPlace() {
+    @Test fun newAppsJoinAtTheFrontAndMissingOnesKeepTheirPlace() {
         val s = store()
         s.move("test.d", "test.a")
         // b is updating: gone for now, back in its place after.
         assertEquals(listOf("test.d", "test.a", "test.c"), s.home(listOf(a, c, d)))
         val e = app("test.e")
-        assertEquals(listOf("test.d", "test.a", "test.b", "test.c", "test.e"), s.home(installed + e))
+        assertEquals(listOf("test.e", "test.d", "test.a", "test.b", "test.c"), s.home(installed + e))
     }
 
     @Test fun aNewFolderTakesTheAppsPlace() {
