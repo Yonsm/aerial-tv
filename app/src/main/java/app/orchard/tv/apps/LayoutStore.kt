@@ -206,7 +206,7 @@ class LayoutStore(context: Context) {
     }.getOrDefault(emptyMap())
 }
 
-/** First-run arrangement: streaming apps first, the TV's own utilities last. */
+/** First-run arrangement: installed apps first, then system apps; existing priorities within each group. */
 private object Defaults {
     private val preferred = listOf(
         "com.ktcp.video",                  // 云视听极光
@@ -235,7 +235,9 @@ private object Defaults {
     )
 
     val comparator = compareBy<AppEntry>(
-        { preferred.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } },
+        { if (it.removable) 0 else 1 },
+        // All launcher entries in one APK share its preferred position.
+        { preferred.indexOf(it.component.packageName).let { i -> if (i < 0) Int.MAX_VALUE else i } },
         { if (it.key in utilities || it.key.startsWith("com.android.")) 1 else 0 },
         { utilities.indexOf(it.key) },
         { it.label.lowercase() },
