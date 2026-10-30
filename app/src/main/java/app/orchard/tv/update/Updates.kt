@@ -18,37 +18,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.FileProvider
-import androidx.core.content.edit
 import app.orchard.tv.BuildConfig
 import app.orchard.tv.guard.GuardSetup
-import app.orchard.tv.system.DiagLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Whether a newer release is out (issues #24, #76). Most owners stay on the version they installed
- * and report bugs fixed long ago. Aerial reads the latest release's tag from the fork's GitHub
- * Releases API; Control Center then names the new version and says
- * how to update. Nothing is downloaded or installed in the background: only when the owner picks
- * "Download and Install" does Aerial fetch the new APK and hand it to the system installer
- * ([install]).
- *
- * Home and network events check at most every three hours; opening Control Center shortens that
- * to ten minutes. Failed checks retry while Home is in front (#912).
+ * Update installation support. Aerial does not check releases or restore cached release notices;
+ * an APK is downloaded only when an existing caller explicitly starts [install].
  */
 object Updates {
     private const val TAG = "AerialUpdates"
-    // Keep this fork's version cache separate from the upstream update source.
-    private const val PREFS = "updates_yonsm"
     const val RELEASES_URL = "https://github.com/Yonsm/aerial-tv/releases/latest"
-    private const val VERSION_URL = "https://api.github.com/repos/Yonsm/aerial-tv/releases/latest"
 
     /**
      * A source that delivers less than [STALL_BYTES] in [STALL_MS] is given up for the next one
@@ -56,88 +43,31 @@ object Updates {
      */
     private const val STALL_MS = 30_000L
     private const val STALL_BYTES = 256 * 1024L
-    const val CONTROL_CENTER_MAX_AGE_MS = UpdateCheck.PANEL_MAX_AGE_MS
 
     /** This build's version, e.g. "1.17" (the guard build's "-guard" left off). */
     val current: String = BuildConfig.VERSION_NAME.substringBefore('-')
 
-    /** The newer release's version, or null when this is the latest (or nothing is known yet). */
-    var available by mutableStateOf<String?>(null); private set
+    /** Checks are disabled, so Control Center never exposes a release notice. */
+    val available: String? = null
 
     /** Where an install started from Control Center has got to. */
     var install by mutableStateOf<Install>(Install.Idle); private set
 
-    private lateinit var prefs: SharedPreferences
     private lateinit var appContext: Context
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var started = false
-    private var checker: UpdateCheck? = null
 
     fun init(context: Context) {
         if (started) return
         started = true
         appContext = context.applicationContext
-        prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        available = prefs.getString("latest", null)?.takeIf { newer(it, current) }
-        checker = UpdateCheck(
-            scope = scope,
-            lastSuccess = { prefs.getLong("checked_at", 0) },
-            read = { withContext(Dispatchers.IO) { JSONObject(read(VERSION_URL)).getString("tag_name").trim().removePrefix("v") } },
-            save = { latest, checkedAt ->
-                prefs.edit { putString("latest", latest); putLong("checked_at", checkedAt) }
-                available = latest.takeIf { newer(it, current) }
-            },
-            log = { Log.i(TAG, it); DiagLog.i("update check: $it") },
-        )
         // A download left from an install that has since finished or been given up.
         scope.launch(Dispatchers.IO) {
             apkFile(context).takeIf { System.currentTimeMillis() - it.lastModified() > 60 * 60 * 1000L }?.delete()
         }
     }
 
-    /**
-     * [force]: now, however recently it last looked (ConfigReceiver's check_update). Opening Control
-     * Center asks with a shorter [maxAgeMs]: that is where the viewer looks for a new version, and a
-     * release out an hour ago was not shown there for hours more (issue #301).
-     */
-    fun checkIfStale(
-        force: Boolean = false,
-        maxAgeMs: Long = UpdateCheck.MAX_AGE_MS,
-        networkCameUp: Boolean = false,
-    ) {
-        checker?.check(force, maxAgeMs, networkCameUp, when {
-            force -> "forced"
-            networkCameUp -> "network"
-            maxAgeMs == CONTROL_CENTER_MAX_AGE_MS -> "control center"
-            else -> "home"
-        })
-    }
-
-    fun diagnostics(): String = if (!started) "not initialized" else
-        "known=${prefs.getString("latest", null) ?: "unknown"}; ${checker?.diagnostics}"
-
-    /** Whether version [a] comes after [b], comparing dotted numbers ("1.10" after "1.9"). */
-    fun newer(a: String, b: String): Boolean {
-        val x = a.split('.').map { it.toIntOrNull() ?: 0 }
-        val y = b.split('.').map { it.toIntOrNull() ?: 0 }
-        for (i in 0 until maxOf(x.size, y.size)) {
-            val d = x.getOrElse(i) { 0 } - y.getOrElse(i) { 0 }
-            if (d != 0) return d > 0
-        }
-        return false
-    }
-
-    private fun read(url: String): String {
-        val c = URL(url).openConnection() as HttpURLConnection
-        LegacyUpdateTls.configure(appContext, c)
-        c.connectTimeout = 8_000
-        c.readTimeout = 10_000
-        return try {
-            c.inputStream.use { it.readBytes().decodeToString() }
-        } finally {
-            c.disconnect()
-        }
-    }
+    fun diagnostics(): String = if (started) "checks disabled" else "not initialized"
 
     // ---- Installing the new version from Control Center ----
 
@@ -292,13 +222,12 @@ object Updates {
         }
     }
 
-    /** Resume failed checks; if the installer closed without replacing Aerial, reset its button. */
+    /** If the installer closed without replacing Aerial, reset its button. */
     fun onHomeResumed() {
-        checker?.setActive(true)
         if (install == Install.Opened) install = Install.Idle
     }
 
-    fun onHomePaused() { checker?.setActive(false) }
+    fun onHomePaused() = Unit
 
     /** Back to the button, when the update page is left. */
     fun resetInstall() {

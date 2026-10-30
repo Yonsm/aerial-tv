@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
  *                                   (Home's layout, as in Personalize; for screenshots of each)
  *   ... --ei preview_apps 3         (Home shows only its first 3 tiles until Aerial restarts, or 0;
  *                                   nothing is saved, for trying a nearly empty Home)
- *   ... --ez check_update true      (look for a new version now, not within three hours)
  *   ... --ez update_test true       ("Download and Install" takes files/update-test.apk instead,
  *                                   until Aerial restarts; for trying an update before a release)
  * The manifest requires the sender to hold WRITE_SECURE_SETTINGS, which the ADB shell has and
@@ -124,10 +123,6 @@ class ConfigReceiver : BroadcastReceiver() {
             Updates.testApk = if (intent.getBooleanExtra("update_test", false)) {
                 java.io.File(context.getExternalFilesDir(null) ?: context.filesDir, "update-test.apk")
             } else null
-        }
-        if (intent.getBooleanExtra("check_update", false)) {
-            Updates.init(context)
-            Updates.checkIfStale(force = true)
         }
         if (intent.hasExtra("keep_adb")) GuardSetup.setKeepAdb(context, intent.getBooleanExtra("keep_adb", false))
         // ... --ei adb_probe_port <port>   (verify the keep_adb toggle without closing a working

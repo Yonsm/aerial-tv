@@ -129,7 +129,6 @@ fun ControlCenter(
         }
     }
 
-    LaunchedEffect(visible) { if (visible) Updates.checkIfStale(maxAgeMs = Updates.CONTROL_CENTER_MAX_AGE_MS) }
     // Whether Aerial is the default home, read again each time the panel opens. Recreated after a
     // standby kill, Aerial kept the "not the default home screen" it read while the firmware was
     // still waking, and the activity's polling (MainActivity) never ran: Xiaomi MiTV-AZFP0,
