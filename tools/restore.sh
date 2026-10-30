@@ -6,19 +6,21 @@
 # If you disabled the stock launcher by hand, also: adb shell pm enable <its package>
 set -euo pipefail
 : "${TV:?set TV to the TV IP address}"
-PKG=app.orchard.tv
-GUARD="$PKG/$PKG.guard.HomeGuardService"
+CODE_PACKAGE=app.orchard.tv
+PKG="${AERIAL_PACKAGE:-com.ts.launcher}"
+LITE="${AERIAL_LITE_PACKAGE:-$PKG.lite}"
+GUARD="$PKG/$CODE_PACKAGE.guard.HomeGuardService"
 case "$TV" in *:*) SERIAL="$TV" ;; *) SERIAL="$TV:5555" ;; esac
 export ANDROID_SERIAL="$SERIAL"
 adb connect "$SERIAL" >/dev/null
 
 # First take away what lets Aerial switch the guard back on, or it would simply do so.
-adb shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.guard.ConfigReceiver" --ez keep_adb false --ez own_screensaver false >/dev/null 2>&1 || true
-adb shell cmd notification disallow_listener "$PKG/$PKG.guard.RevivalListener" >/dev/null 2>&1 || true
+adb shell am broadcast -a "$CODE_PACKAGE.CONFIG" -n "$PKG/$CODE_PACKAGE.guard.ConfigReceiver" --ez keep_adb false --ez own_screensaver false >/dev/null 2>&1 || true
+adb shell cmd notification disallow_listener "$PKG/$CODE_PACKAGE.guard.RevivalListener" >/dev/null 2>&1 || true
 # Android 6 and 7 have no `cmd`: take it out of the setting itself, leaving the other listeners.
 LISTENERS=$(adb shell settings get secure enabled_notification_listeners 2>/dev/null | tr -d '\r')
 case "$LISTENERS" in
-  *"$PKG/$PKG.guard.RevivalListener"*)
+  *"$PKG/$CODE_PACKAGE.guard.RevivalListener"*)
     REST=$(printf '%s' "$LISTENERS" | tr ':' '\n' | grep -v "^$PKG/" | paste -sd: - || true)
     if [ -n "$REST" ]; then adb shell settings put secure enabled_notification_listeners "$REST" >/dev/null 2>&1 || true
     else adb shell settings delete secure enabled_notification_listeners >/dev/null 2>&1 || true; fi ;;
@@ -39,7 +41,7 @@ case "$(adb shell settings get secure screensaver_components | tr -d '\r')" in
 esac
 
 CURRENT=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
-REST=$(printf '%s' "$CURRENT" | tr ':' '\n' | grep -v -x "$GUARD" | grep -v -x "$PKG/.guard.HomeGuardService" | paste -sd: - || true)
+REST=$(printf '%s' "$CURRENT" | tr ':' '\n' | grep -v -x "$GUARD" | grep -v -x "$PKG/$CODE_PACKAGE.guard.HomeGuardService" | paste -sd: - || true)
 if [ -z "$REST" ] || [ "$REST" = null ]; then
   adb shell settings delete secure enabled_accessibility_services >/dev/null
 else
@@ -56,7 +58,7 @@ if [ -n "$BOOT_APP" ] && [ "$BOOT_APP" != null ]; then
   done
   adb shell settings delete global aerial_boot_app_componentname >/dev/null
   adb shell settings delete global aerial_boot_app_mode >/dev/null
-elif [ "$(adb shell settings get system boot_app_componentname | tr -d '\r')" = "$PKG/.MainActivity" ]; then
+elif [ "$(adb shell settings get system boot_app_componentname | tr -d '\r')" = "$PKG/$CODE_PACKAGE.MainActivity" ]; then
   adb shell settings put system boot_app_componentname "''" >/dev/null
 fi
 # Hisense VIDAA: put back the launcher install.sh replaced in persist.vt.use_home_pkg.
@@ -81,7 +83,6 @@ if adb shell pm path com.mitv.tvhome 2>/dev/null | grep -q package: &&
 fi
 
 # Aerial Lite (Android 4.x) takes over only as the home app the owner chose; nothing else to undo.
-LITE=app.orchard.tv.lite
 LITE_HERE=$(adb shell pm path "$LITE" 2>/dev/null | grep -c package: || true)
 if [ "${1:-}" = --uninstall ]; then
   adb shell pm path "$PKG" 2>/dev/null | grep -q package: && adb uninstall "$PKG"

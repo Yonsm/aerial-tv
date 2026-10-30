@@ -24,7 +24,8 @@ command -v adb >/dev/null || { echo "adb not found. macOS: brew install android-
 # The timings and timeouts below are perl's: without it every wait ended at once, and a Home that
 # worked was reported FAIL (issue #1208, the reporter's agent).
 command -v perl >/dev/null || { echo "perl not found; this script times each check with it. Linux: install perl; Windows: run it in Git Bash, which has perl." >&2; exit 1; }
-PKG=app.orchard.tv
+PKG="${AERIAL_PACKAGE:-com.ts.launcher}"
+CODE_PACKAGE=app.orchard.tv
 case "$TV" in *:*) SERIAL="$TV" ;; *) SERIAL="$TV:5555" ;; esac
 export ANDROID_SERIAL="$SERIAL"
 
@@ -38,7 +39,7 @@ connect || { echo "Could not connect to $SERIAL. Check that ADB debugging is on,
 # </dev/null: adb forwards stdin, which under `curl | bash` is the rest of this script.
 sh_() { adb shell "$@" </dev/null 2>/dev/null | tr -d '\r'; }
 now() { perl -MTime::HiRes=time -e 'printf "%.1f", time'; }
-config() { sh_ am broadcast -a app.orchard.tv.CONFIG -n "$PKG/.guard.ConfigReceiver" "$@" | sed -n 's/.*data="\(.*\)"$/\1/p'; }
+config() { sh_ am broadcast -a "$CODE_PACKAGE.CONFIG" -n "$PKG/$CODE_PACKAGE.guard.ConfigReceiver" "$@" | sed -n 's/.*data="\(.*\)"$/\1/p'; }
 
 # The package of the window with focus: mCurrentFocus, else the focused app (Android 5-9 differ).
 fg() {
@@ -107,7 +108,7 @@ if [ "${HOME_TO%%/*}" != "$PKG" ] && [ "${BOUND:-0}" -eq 0 ]; then
 fi
 
 # 2. Home on Aerial itself.
-sh_ am start -W -n "$PKG/.MainActivity" >/dev/null; sleep 2
+sh_ am start -W -n "$PKG/$CODE_PACKAGE.MainActivity" >/dev/null; sleep 2
 sh_ input keyevent KEYCODE_HOME
 read -r secs pkg <<<"$(wait_aerial 8)"
 if [ "$secs" = "-" ]; then result home_on_aerial FAIL "in front after 8 s: $pkg"
@@ -197,7 +198,7 @@ else
       sleep 7
       adb exec-out screencap -p </dev/null > "$DIR/input-$i.png" 2>/dev/null
       echo "  input $i: $label ($id) -> ${opened#open_source: }; in front $(fg); screenshot $DIR/input-$i.png"
-      sh_ am start -n "$PKG/.MainActivity" >/dev/null; sleep 2
+      sh_ am start -n "$PKG/$CODE_PACKAGE.MainActivity" >/dev/null; sleep 2
     done
     result inputs PASS "$N listed; each opened, see the screenshots and tell which port each showed"
   else result inputs SKIP "$N listed; INPUTS=1 to open each"
@@ -218,6 +219,6 @@ echo '```'
 } 2>&1 | tee "$OUT"
 
 # Back on Aerial, as the TV was before.
-sh_ am start -n "$PKG/.MainActivity" >/dev/null
+sh_ am start -n "$PKG/$CODE_PACKAGE.MainActivity" >/dev/null
 echo >&2
 echo "Saved to $OUT. Paste it with tools/report.sh's output into https://github.com/pengchujin/aerial-tv/issues/new?template=device.yml" >&2
