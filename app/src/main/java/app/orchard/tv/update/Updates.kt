@@ -161,11 +161,8 @@ object Updates {
         NotNewer,
     }
 
-    /** The official package. Copies renamed for one firmware (OPPO, see docs/devices) cannot update from the release. */
-    private const val PACKAGE = "app.orchard.tv"
-
     /** Whether this copy can update itself from the release at all. */
-    fun canInstall(context: Context): Boolean = context.packageName == PACKAGE
+    fun canInstall(context: Context): Boolean = context.packageName == BuildConfig.RELEASE_APPLICATION_ID
 
     /**
      * Downloads this flavor's APK of the latest release and opens the system installer on it.

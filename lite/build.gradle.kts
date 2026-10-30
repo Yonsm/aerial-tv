@@ -9,13 +9,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val aerialLiteApplicationId = providers.gradleProperty("aerialLiteApplicationId").getOrElse("com.ts.launcher.lite")
+
 android {
     namespace = "app.orchard.tv.lite"
     compileSdk = 36
 
     defaultConfig {
         // Its own package: the 4.x TVs never get the full app, and the two update separately.
-        applicationId = "app.orchard.tv.lite"
+        applicationId = aerialLiteApplicationId
         // Android 4.0.
         minSdk = 14
         targetSdk = 34

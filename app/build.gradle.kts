@@ -7,12 +7,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val aerialApplicationId = providers.gradleProperty("aerialApplicationId").getOrElse("com.ts.launcher")
+
 android {
     namespace = "app.orchard.tv"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "app.orchard.tv"
+        applicationId = aerialApplicationId
         // Android 5.0. Compose 1.10 and later need 6.0, so the Compose BOM below stays on 1.9.
         minSdk = 21
         targetSdk = 34
@@ -22,6 +24,8 @@ android {
         // see system/DiagLog.kt.
         val diag = project.hasProperty("diag")
         buildConfigField("boolean", "DIAG", diag.toString())
+        buildConfigField("String", "RELEASE_APPLICATION_ID", "\"com.ts.launcher\"")
+        resValue("string", "revival_account_type", aerialApplicationId)
         if (diag) versionNameSuffix = "-diag"
     }
 
