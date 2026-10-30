@@ -214,19 +214,29 @@ private object Defaults {
         "com.cibn.tv",                     // CIBN 酷喵
         "com.hunantv.license",             // 芒果 TV
         "com.xiaodianshi.tv.yst",          // 云视听小电视
+        "blbl.cat3399",
+        "com.fongmi.android.tv",
+        "com.github.tvbox.osc.tk",
+        "com.quark.yun.tv",
+        "com.amazing.cloudisk.tv",
+        "net.yonsm.televe",
+        "net.yonsm.tukulu",
+        "com.github.neithern.tuku",
+
         "com.netflix.ninja",
         "com.google.android.youtube.tv",
+        "org.smarttube.stable",
         "com.apple.atve.androidtv.appletv",
         "com.disney.disneyplus",
         "com.amazon.amazonvideo.livingroom",
         "com.hbo.hbonow",
         "com.spotify.tv.android",
         "com.mitv.mivideoplayer",
-        "com.quark.yun.tv",
     )
 
     private val utilities = listOf(
         "com.xiaomi.mitv.settings",
+        "com.sony.dtv.smarthelp",
         "com.android.tv.settings",
         "com.xiaomi.mitv.tvmanager",
         "com.mitv.tvhome",
@@ -244,6 +254,8 @@ private object Defaults {
     )
 
     fun hidden(installed: Set<String>): Set<String> = buildSet {
+        // The system provisioning activity is not a normal launcher app.
+        if ("com.android.provision" in installed) add("com.android.provision")
         // Xiaomi's own settings app covers everything AOSP settings does, and more.
         if ("com.xiaomi.mitv.settings" in installed) add("com.android.tv.settings")
     }
