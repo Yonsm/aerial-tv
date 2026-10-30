@@ -29,7 +29,7 @@ class LayoutStore(context: Context) {
     private var initialized = prefs.getBoolean("initialized", false)
 
     /**
-     * Home in the user's order. Newly installed apps join at the end; [folderTile] makes the tile
+     * Home in the user's order. Newly installed apps join at the front; [folderTile] makes the tile
      * for a folder from the apps in it that are installed and not hidden. A folder with none of
      * those shows no tile, but keeps its apps for when they come back.
      */
@@ -43,7 +43,7 @@ class LayoutStore(context: Context) {
         val known = order.toHashSet().apply { folders.values.forEach { addAll(it.apps) } }
         val fresh = all.filter { it.key !in known }.sortedWith(Defaults.comparator).map { it.key }
         // Keep keys of apps that are only temporarily missing (e.g. updating) so they return in place.
-        order = order + fresh
+        order = fresh + order
         save()
         val contents = folders.mapValues { (_, f) -> f.apps.mapNotNull(byKey::get).filter { it.key !in hidden } }
         val home = order.mapNotNull { key ->
