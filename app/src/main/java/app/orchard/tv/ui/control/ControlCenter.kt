@@ -81,6 +81,7 @@ import app.orchard.tv.HomeViewModel
 import app.orchard.tv.Overlay
 import app.orchard.tv.R
 import app.orchard.tv.apps.SourceLooks
+import app.orchard.tv.guard.HomeGuardService
 import app.orchard.tv.settings.AerialSettings
 import app.orchard.tv.system.HomeStatus
 import app.orchard.tv.system.LaunchFallback
@@ -129,7 +130,6 @@ fun ControlCenter(
         }
     }
 
-    LaunchedEffect(visible) { if (visible) Updates.checkIfStale(maxAgeMs = Updates.CONTROL_CENTER_MAX_AGE_MS) }
     // Whether Aerial is the default home, read again each time the panel opens. Recreated after a
     // standby kill, Aerial kept the "not the default home screen" it read while the firmware was
     // still waking, and the activity's polling (MainActivity) never ran: Xiaomi MiTV-AZFP0,
@@ -214,6 +214,7 @@ private fun MainPage(vm: HomeViewModel, now: LocalDateTime, takeFocus: Boolean, 
             delay(3000)
         }
     }
+    val showPower = vm.loaded && vm.sources.size < 2
     LaunchedEffect(Unit) {
         if (!takeFocus) return@LaunchedEffect
         withFrameNanos { }
@@ -248,13 +249,22 @@ private fun MainPage(vm: HomeViewModel, now: LocalDateTime, takeFocus: Boolean, 
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             RoundButton(
-                Glyph.Input, stringResource(R.string.cc_inputs),
+                if (showPower) Glyph.Power else Glyph.Input,
+                stringResource(if (showPower) R.string.cc_power else R.string.cc_inputs),
                 focusRequester = first,
                 modifier = Modifier.onFocusChanged { if (it.isFocused) cameFrom = first },
             ) {
-                // TCL lists no inputs to Android; its own input panel is the next best thing.
-                vm.overlay = if (vm.sources.isEmpty() && SystemProbe.openInputPicker(context)) Overlay.None
-                else Overlay.ControlCenter(CcPage.Inputs)
+                if (showPower) vm.whenUnlocked {
+                    if (HomeGuardService.showPowerDialog()) vm.overlay = Overlay.None
+                    else {
+                        android.widget.Toast.makeText(context, R.string.cc_power_unavailable, android.widget.Toast.LENGTH_LONG).show()
+                        if (!HomeGuardService.isRunning) SystemProbe.guardSettingsIntent(context)?.let(onOpen)
+                    }
+                } else {
+                    // TCL lists no inputs to Android; its own input panel is the next best thing.
+                    vm.overlay = if (vm.sources.isEmpty() && SystemProbe.openInputPicker(context)) Overlay.None
+                    else Overlay.ControlCenter(CcPage.Inputs)
+                }
             }
             RoundButton(
                 when (vm.network.kind) { NetKind.Ethernet -> Glyph.Ethernet; NetKind.Offline -> Glyph.Offline; else -> Glyph.Wifi },
@@ -344,8 +354,7 @@ private fun UpdatePage(vm: HomeViewModel, takeFocus: Boolean) {
     val canInstall = remember { Updates.canInstall(context) }
     var qr by remember { mutableStateOf<ImageBitmap?>(null) }
     LaunchedEffect(Unit) {
-        val ip = PhoneServer.lanAddress(context)
-        val url = "https://aerial.qust.me/update/#v=${Updates.current}&f=${BuildConfig.FLAVOR}" + (ip?.let { "&tv=$it" } ?: "")
+        val url = Updates.RELEASES_URL
         qr = withContext(Dispatchers.Default) { PhoneServer.qr(url).asImageBitmap() }
     }
     Column {

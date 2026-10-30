@@ -52,7 +52,7 @@ enum class Effects(val key: String) {
     Auto("auto"), Full("full"), Lite("lite");
 
     companion object {
-        fun of(key: String?) = entries.firstOrNull { it.key == key } ?: Auto
+        fun of(key: String?) = entries.firstOrNull { it.key == key } ?: Lite
     }
 }
 
@@ -84,7 +84,7 @@ object AerialSettings {
      * Only the top row on Home, low on the screen, so the wallpaper (a family photo) shows above it,
      * as tvOS does under a full-screen top shelf. The rest of the grid is one press down.
      */
-    var oneRowHome by mutableStateOf(true); private set
+    var oneRowHome by mutableStateOf(false); private set
 
     /**
      * Apps a row on Home: [HOME_COLUMNS], five by default as Aerial always had, six as tvOS 26 lays
@@ -106,13 +106,13 @@ object AerialSettings {
     var uiSounds by mutableStateOf(UiSounds.Tv); private set
 
     /** The Liquid Glass plate under the top row; some prefer the apps straight on the wallpaper (#151). */
-    var homePlate by mutableStateOf(true); private set
+    var homePlate by mutableStateOf(false); private set
 
     /** The clock, with the date and weather, in the top right instead of the top left. */
     var clockRight by mutableStateOf(false); private set
 
     /** The date and weather over a big clock above the top row, instead of one small line in the corner. */
-    var largeClock by mutableStateOf(false); private set
+    var largeClock by mutableStateOf(true); private set
 
     /**
      * The moving wallpaper (aerial films, the owner's own videos) plays on the top row whatever the
@@ -131,7 +131,7 @@ object AerialSettings {
     var screensaverClock by mutableStateOf(true); private set
 
     /** Every app's name under its tile, not only the focused one's (issue #28), the top row's on the glass plate too. */
-    var showAllNames by mutableStateOf(false); private set
+    var showAllNames by mutableStateOf(true); private set
 
     /** Back on Home's top row starts the screensaver, as on tvOS; off for homes where it gets pressed by accident (issue #94). */
     var backStartsScreensaver by mutableStateOf(true); private set
@@ -190,13 +190,13 @@ object AerialSettings {
         pinHash = prefs.getString("pin_hash", null)
         pinSet = pinHash != null
         pinArrows = prefs.getBoolean("pin_arrows", false)
-        oneRowHome = prefs.getBoolean("one_row_home", true)
+        oneRowHome = prefs.getBoolean("one_row_home", false)
         peekNextRow = prefs.getBoolean("peek_next_row", true)
         homeColumns = prefs.getInt("home_columns", DEFAULT_HOME_COLUMNS).takeIf { it in HOME_COLUMNS } ?: DEFAULT_HOME_COLUMNS
         clockRight = prefs.getBoolean("clock_right", false)
-        largeClock = prefs.getBoolean("large_clock", false)
-        homePlate = prefs.getBoolean("home_plate", true)
-        showAllNames = prefs.getBoolean("show_all_names", false)
+        largeClock = prefs.getBoolean("large_clock", true)
+        homePlate = prefs.getBoolean("home_plate", false)
+        showAllNames = prefs.getBoolean("show_all_names", true)
         wallpaperAlwaysMoves = prefs.getBoolean("wallpaper_always_moves", false)
         showWeather = prefs.getBoolean("show_weather", true)
         screensaverClock = prefs.getBoolean("screensaver_clock", true)

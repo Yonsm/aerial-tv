@@ -9,8 +9,9 @@ app/src/main/java/app/orchard/tv/
 ├── MainActivity.kt          HOME Activity：窗口设置、960×540 画布密度、广播/网络监听、空闲计时与桌面内屏保、启动 App
 ├── HomeViewModel.kt         首页状态：App 列表、浮层（Overlay）、系统状态（网络/音量/亮度/信号源/桌面状态）、移动模式
 ├── apps/
-│   ├── Apps.kt              AppCatalog：枚举 LEANBACK_LAUNCHER + LAUNCHER，按包去重，缓存磁贴图（按 lastUpdateTime）
-│   ├── TileDiskCache.kt     磁贴图的磁盘缓存（cache/tiles/<包名>.tile），冷启动不用重画
+│   ├── Apps.kt              AppCatalog：枚举 LEANBACK_LAUNCHER + LAUNCHER，每个入口组件一个磁贴，缓存磁贴图（按 lastUpdateTime）
+│   ├── LauncherEntries.kt   入口组件去重与稳定键：主入口沿用包名，附加入口按组件保存
+│   ├── TileDiskCache.kt     磁贴图的磁盘缓存（cache/tiles/），冷启动不用重画
 │   ├── TileArt.kt           磁贴图生成：横幅 / 自适应图标双层 / 铺满底板 / 同色系底色；主色；每 App 的 64×36 环境光背景
 │   ├── TileRecipes.kt       精选图标库：按包名给 App 指定重绘方式（品牌色、白色 logo、用图标代替横幅、自绘图标）
 │   ├── TileSheet.kt         把所有磁贴拼成一张图，用来对比改动前后（ADB 触发，见 HANDOFF「调试」）
@@ -85,7 +86,7 @@ site/update/                        电视升级页二维码打开的页面：�
 - **刷新率**：Android 12 起，如果面板能无黑屏地切到更高的刷新率（`Display.Mode.getAlternativeRefreshRates`），首页会选最高的那个（最高 120Hz），见 `MainActivity.preferSmoothestRefreshRate`。会黑屏的切换一律不做：桌面每次回来都黑一下是不可接受的。
 - **网格**（`HomeScreen.GridMetrics`）：5 列，16:9 磁贴，边距 56dp、间距 28dp。双排（1.66 起）从下往上排：第二排下面有底板时留底板的边距和内边距（30 + 20dp，全部显示名称时再加 28dp 放第二排的名称），没底板时留 50dp 给名称（`RowNameRoom`，和有底板时一样高；以前 70dp，没底板的两排高出 20dp，每排 4 个时把时钟顶上去）。两排在同一块底板上、不显示名称时间距 30dp（`ShelfRowGap`）；有名称夹在中间时用网格的行距（以前底板上又加 28dp，两份名称空间叠在一起）。两排最高到大时钟的天气行下面（`LargeClockHeight` 152dp，从时钟顶算）；放不下（每排 4 个加全部名称）时大时钟往上挪到和状态按钮齐平（只在左边挪，右边会撞到按钮），还放不下的部分在聚焦第二排时整排上抬（`shelfLift`，其余情况为 0）。双排时一块底板托住两排，第二排也不显示名称（同第一排）；第三排起停在首屏时看不见，按滚动进度淡入（不看「第二排露出」）。进网格时双排少滚一行（`scrollFor(focusedRow - 1)`），和单排一样第一排完整地在最上面。`collapse`（首屏到网格的滚动距离：时钟和底板淡出、网格玻璃淡入、影片停下都按它算）不小于半个行距：每排 4 个的双排第一排在 `restY` 上方或同高，算成 0 或负数时一直当作已经滚进网格，航拍影片不播放。个性化里选「主屏幕：单排」（`AerialSettings.oneRowHome`，1.23 起默认开；选过「双排」的保持不变）时，第一行下移到底部（屏幕高减一个行距再减 12dp，第二行只露一条边；个性化「第二排：不露出」（`AerialSettings.peekNextRow` 关）时，第二排及以下按滚动进度淡入，停在第一排时完全看不见；第一排再往下放：有底板时底板离屏幕下沿 30dp，和离左右边一样（`PlateMarginBottom`），没底板时磁贴下面留 70dp 给聚焦 App 的名称），好让壁纸里的合照露出来，像 tvOS 全屏 Top Shelf 时那样；时钟大小选「小」（`AerialSettings.largeClock` 关）时，时间和天气是一行小字：时钟选「左上」在左上角（`HomeChrome.CornerClock`），选「右上」在右上角状态按钮的左边。选「大」时是锁屏那样的一块（`HomeChrome.ShelfClock`）：日期、大时钟、天气（当前温度、城市、天气、今天最高最低）三行，左右都和磁贴的边对齐（`AerialSettings.clockRight`）；不论单排还是双排，都固定在状态按钮下面（`GridMetrics.clockY` = 80dp，只有上面说的双排放不下时往上挪），不再挂在第一排上方（以前单排时浮在屏幕中间，双排时贴着底板）。时间用 Inter 粗体（W700，104sp，字距 -0.04em），日期和天气是 19sp、16sp 的半粗体，农历和天气详情用 72% 白。每行都用 `capBox` 只按大写字母高度排版（从字顶到基线），所以行间距就是看到的距离：日期离数字 16dp、天气离数字 18dp，`clockY` 是日期字顶的位置（80dp）。进网格后的位置和模糊背景不变。磁贴用绝对 `offset` 定位，没有用 Row，所以移动 App 时组件不会重建、焦点不会丢，位置变化由 `animateIntOffsetAsState` 做重排动画。
 - **滚动**：不用 `verticalScroll`（它会自动 bringIntoView），而是一个 `Animatable` 加内容 `offset`，目标由聚焦行决定（`scrollFor`），用弹簧动画以便连按时平滑改变目标。
-- **焦点**：每个磁贴一个 `FocusRequester`（按包名存在 map 里）。方向键由磁贴自己处理：`moveFocus` 失败时触发边缘回弹。每行最后一个磁贴（`rowEnd`）右键是 `FocusRequester.Cancel`，否则 Compose 会找到右上角的状态按钮（#211）。浮层打开时磁贴 `focusable(enabled=false)`，焦点不会逃出浮层；浮层关闭后恢复到原磁贴。HOME 键重置通过 `homeResetPending` 加「窗口重新获得焦点」两个条件触发（在别的 App 在前台时请求焦点会丢）。
+- **焦点**：每个磁贴一个 `FocusRequester`（按磁贴键存在 map 里）。方向键由磁贴自己处理：`moveFocus` 失败时触发边缘回弹。每行最后一个磁贴（`rowEnd`）右键是 `FocusRequester.Cancel`，否则 Compose 会找到右上角的状态按钮（#211）。浮层打开时磁贴 `focusable(enabled=false)`，焦点不会逃出浮层；浮层关闭后恢复到原磁贴。HOME 键重置通过 `homeResetPending` 加「窗口重新获得焦点」两个条件触发（在别的 App 在前台时请求焦点会丢）。
 - **返回键**：网格里 → 回第一行；第一行 → 启动屏保（tvOS 行为）。
 - **焦点样式**：`AppTile` 聚焦时放大约 1.15 倍（宽高各自放大整数个像素，见 `focusedPx`；圆角图有静止和焦点两种尺寸，各自一个像素对一个像素，#307），加阴影、顶部高光和加粗的名字。放大用临界阻尼弹簧（`dampingRatio = 1`，和 Android TV 的 Leanback / Compose for TV 一样不回弹）：之前 0.66 的回弹在白框上会显得发抖。`FocusStyle.HighContrast`（默认）时，另在磁贴外 5dp 处画 3dp 白色描边（外加一圈淡黑边，保证在亮壁纸上也看得见），描边带玻璃那样左上和右下更亮的渐变，内侧一圈细光。描边有自己的透明度弹簧：出现时跟着放大从磁贴边缘长出来，消失得更快，所以左右移动时不会同时看到两个框。描边画在一个不裁剪的独立图层上，和磁贴共用放大、倾斜、推移、抖动这些变换。起因：国产电视都是方向键遥控器，没有 Siri 遥控器那种跟着手指的倾斜，只靠放大的话用户找不到焦点。
 - **App 名称**：个性化里「App 名称：只显示选中的 / 全部显示」（`AerialSettings.showAllNames`）。只显示选中的时，第一排有玻璃底板就不显示名称（tvOS 26 的做法；以前试过只显示选中的那个，放在玻璃上很怪）；全部显示时，第一排的名称放在底板里面（不放在底板外：壁纸可能很亮，底板里是统一的磨砂底色，字更清楚），底板下沿多出 28dp（`PlateNameRoom`），底板上的名称聚焦时不跟着高对比度白框往下移（`AppTile.nameOnPlate`），否则会碰到底板下沿；其余名称稍暗。为了不让第二排顶到加高的底板，焦点在第一排时第二排及以下多往下 28dp（`GridMetrics.firstGap`），进网格后靠 `animateIntOffsetAsState` 收回，排距一致。
@@ -185,14 +186,16 @@ NanoHTTPD 监听 8790 端口，路径前缀是 8 位随机令牌（每次打开�
 
 控制中心「有新版本」→ 升级页：
 
+- **版本来源**：读取 `https://api.github.com/repos/Yonsm/aerial-tv/releases/latest` 的 `tag_name`（数字版本，可带 `v` 前缀）。使用独立的 `updates_yonsm` 偏好文件，避免沿用上游缓存。
+
 - **旧固件存储权限**：Android 6 上只有外部更新目录不可写、且缺少读或写存储权限时，才请求两项权限；允许后再点一次「下载并安装」。声明限制到 API 23，Android 7 及以后继续用内部缓存，不请求存储权限。MiTV4-ANSM0（Android 6.0.1）独立 release 测试工具验证：仅授予写权限仍无法创建目录，同时授予读、写权限后可写入官方 1.56 APK，系统安装器可解析并显示更新确认页；该安装器没有接收 `content://` APK 的入口，因此保留旧系统的外部缓存 + `file://` 路径。尚未用官方签名的新版本验证完整覆盖升级。
 
-- **下载并安装**：先从官网 `download/aerial-<flavor>.apk` 下载，失败再从 GitHub `releases/latest/download`（不用第三方 GitHub 代理）。下载后检查包名、签名（和这台电视上的 Aerial 比）和 versionCode，不对就不打开安装器，并在页上说明原因（`Updates.Failure`）。改过包名的版本（OPPO）不显示按钮。
+- **下载并安装**：从 `https://github.com/Yonsm/aerial-tv/releases/latest/download/aerial-<flavor>.apk` 下载。下载后检查包名、签名（和这台电视上的 Aerial 比）和 versionCode，不对就不打开安装器，并在页上说明原因（`Updates.Failure`）。改过包名的版本（OPPO）不显示按钮。
 - **旧系统更新 TLS**（#871）：Android 5.0–6.0 的版本检查和 APK 下载连接用 `LegacyUpdateTls`，在系统根证书之外额外信任随包的 ISRG Root X1（`raw/isrg_root_x1.pem`，来源 `https://letsencrypt.org/certs/isrgrootx1.pem`，DER SHA-256 `96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6`）。只给这两个更新连接设置 socket factory，不改全局默认值、主机名校验或其他网络功能，Android 7 起沿用系统设置。MiTV4-ANSM0 / Android 6.0.1 上以 ADB shell 运行生产信任管理代码对比：官网版本地址两者均 HTTP 200；GitHub APK 跳到 `release-assets.githubusercontent.com` 后，系统信任库报缺少根证书，补充后 HTTP 200 并能读取 APK 数据。没有用本地签名覆盖电视上的官方 Aerial，完整应用内覆盖升级仍需官方签名版本验证。
 - **安卓 13 及以上先用安装会话**（`Updates.installBySession`，#723）：`ACTION_VIEW` 的安装在安卓 13 起记成本地文件（`packageSource=3`），系统把 `ACCESS_RESTRICTED_SETTINGS` 设成 deny，TCL T966D5（安卓 14）上守护随之被关。会话声明 `PACKAGE_SOURCE_OTHER`，系统照样弹确认（`UpdateResult` 收到 `STATUS_PENDING_USER_ACTION` 后打开确认页）；会话失败时退回下面的 `ACTION_VIEW`。已经是 deny 的不会因为后来的升级变回 allow，要 `appops set app.orchard.tv ACCESS_RESTRICTED_SETTINGS allow`。安卓 13 TV 模拟器上验证过。
 - **交给系统安装器**（安卓 12 及以下）：用 `ACTION_VIEW` + FileProvider（`res/xml/update_files.xml`，Android 7 以下用 `file://`）打开系统安装器，不用 PackageInstaller session：TCL 的安装校验只放行由 `com.android.packageinstaller` 发起的安装，`ACTION_VIEW` 时发起者就是系统安装器（和当贝一样）。要 `REQUEST_INSTALL_PACKAGES`：小米有「安装未知应用」设置页，没开时跳过去；TCL 没有这个页面，靠 `install.sh` 用 `appops set … REQUEST_INSTALL_PACKAGES allow` 放行。
 - **装完回到 Aerial**：安装会杀掉 Aerial 的任务，露出底下的东西（小米上是 PatchWall 的详情页，不是原桌面的 HOME Activity，守护原来的规则不管）。所以打开安装器前记下时间（`GuardSetup.noteInstallerOpened`，用 commit 立刻写盘），新进程的守护在 15 分钟内看到原桌面的任意页面就拉回 Aerial；在安装器里取消、回到 Aerial 时清掉这个记录。
-- **二维码**：装不上的电视（以及 1.31 及以前的版本）还是要再运行一次安装命令。升级页不再显示长命令，而是一个二维码，打开 `https://aerial.qust.me/update/#v=…&f=…&tv=<局域网IP>`（参数放在 `#` 后面，浏览器不会发给服务器），页面上先是 Agent 提示词，再是电视上的按钮说明和可复制的安装命令。
+- **二维码**：升级页打开 `https://github.com/Yonsm/aerial-tv/releases/latest`，用户可查看发布说明和下载 APK。
 - 测试：`ConfigReceiver --ez check_update true` 立刻检查新版本；`--ez update_test true` 让「下载并安装」改用 `Android/data/app.orchard.tv/files/update-test.apk`（到 Aerial 重启为止），发版前就能测整条流程。做法：装一个只把 `versionName` 改低的包，推一个带新代码的包当 update-test.apk。
 
 ## 诊断报告（system/Diagnostics.kt）

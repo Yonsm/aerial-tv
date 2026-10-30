@@ -391,7 +391,8 @@ object GuardSetup {
         val current = Settings.Secure.getString(resolver, key).orEmpty()
         val mine = ComponentName(context, AerialDream::class.java).flattenToString()
         // 1.6 and earlier: the class was OrchardDream, and install.sh had claimed the screensaver.
-        val renamed = "${context.packageName}/${context.packageName}.dream.OrchardDream" in current
+        val dreamPackage = AerialDream::class.java.name.substringBeforeLast('.')
+        val renamed = "${context.packageName}/$dreamPackage.OrchardDream" in current
         if (renamed) prefs.edit().putBoolean(KEY_OWN_SCREENSAVER, true).apply()
         if (!prefs.getBoolean(KEY_OWN_SCREENSAVER, false) || current == mine) return
         // "System" chosen in Personalize: the firmware's dream stays (screensaverModeChanged).

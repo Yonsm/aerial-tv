@@ -9,13 +9,15 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val aerialLiteApplicationId = providers.gradleProperty("aerialLiteApplicationId").getOrElse("com.ts.launcher.lite")
+
 android {
     namespace = "app.orchard.tv.lite"
     compileSdk = 36
 
     defaultConfig {
         // Its own package: the 4.x TVs never get the full app, and the two update separately.
-        applicationId = "app.orchard.tv.lite"
+        applicationId = aerialLiteApplicationId
         // Android 4.0.
         minSdk = 14
         targetSdk = 34
@@ -85,6 +87,7 @@ val copySources by tasks.registering(Copy::class) {
     from(rootProject.file("app/src/main/java/app/orchard/tv/apps/TileRecipes.kt"))
     from(rootProject.file("app/src/main/java/app/orchard/tv/weather/Cities.kt"))
     from(rootProject.file("app/src/main/java/app/orchard/tv/apps/LayoutStore.kt"))
+    from(rootProject.file("app/src/main/java/app/orchard/tv/apps/LauncherEntries.kt"))
     from(rootProject.file("app/src/main/java/app/orchard/tv/apps/AppNames.kt"))
     from(rootProject.file("app/src/main/java/app/orchard/tv/apps/CustomIcons.kt"))
     from(rootProject.file("app/src/main/java/app/orchard/tv/wallpaper/ScreensaverVideos.kt"))

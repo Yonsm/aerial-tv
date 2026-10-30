@@ -42,14 +42,14 @@ object LiteSettings {
     private lateinit var prefs: SharedPreferences
 
     var focusStyle = FocusStyle.HighContrast; private set
-    var oneRowHome = true; private set
+    var oneRowHome = false; private set
     var peekNextRow = true; private set
     /** Apps a row on Home and in folders, as the full app's: four, five or six. */
     var homeColumns = 5; private set
-    var homePlate = true; private set
-    var showAllNames = false; private set
+    var homePlate = false; private set
+    var showAllNames = true; private set
     var clockRight = false; private set
-    var largeClock = false; private set
+    var largeClock = true; private set
     var showWeather = true; private set
     var screensaverClock = true; private set
     var backStartsScreensaver = true; private set
@@ -73,13 +73,13 @@ object LiteSettings {
         if (::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         focusStyle = FocusStyle.of(prefs.getString("focus_style", null))
-        oneRowHome = prefs.getBoolean("one_row_home", true)
+        oneRowHome = prefs.getBoolean("one_row_home", false)
         peekNextRow = prefs.getBoolean("peek_next_row", true)
         homeColumns = prefs.getInt("home_columns", 5).takeIf { it in HOME_COLUMNS } ?: 5
-        homePlate = prefs.getBoolean("home_plate", true)
-        showAllNames = prefs.getBoolean("show_all_names", false)
+        homePlate = prefs.getBoolean("home_plate", false)
+        showAllNames = prefs.getBoolean("show_all_names", true)
         clockRight = prefs.getBoolean("clock_right", false)
-        largeClock = prefs.getBoolean("large_clock", false)
+        largeClock = prefs.getBoolean("large_clock", true)
         showWeather = prefs.getBoolean("show_weather", true)
         screensaverClock = prefs.getBoolean("screensaver_clock", true)
         backStartsScreensaver = prefs.getBoolean("back_starts_screensaver", true)

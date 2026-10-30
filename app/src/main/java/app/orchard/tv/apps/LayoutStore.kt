@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.Collator
 
 /** A folder on Home, as on tvOS: a tile in the grid that opens to show the apps put in it. */
 data class Folder(val id: String, val name: String, val apps: List<String>) {
@@ -29,7 +30,7 @@ class LayoutStore(context: Context) {
     private var initialized = prefs.getBoolean("initialized", false)
 
     /**
-     * Home in the user's order. Newly installed apps join at the end; [folderTile] makes the tile
+     * Home in the user's order. Newly installed apps join at the front; [folderTile] makes the tile
      * for a folder from the apps in it that are installed and not hidden. A folder with none of
      * those shows no tile, but keeps its apps for when they come back.
      */
@@ -43,7 +44,7 @@ class LayoutStore(context: Context) {
         val known = order.toHashSet().apply { folders.values.forEach { addAll(it.apps) } }
         val fresh = all.filter { it.key !in known }.sortedWith(Defaults.comparator).map { it.key }
         // Keep keys of apps that are only temporarily missing (e.g. updating) so they return in place.
-        order = order + fresh
+        order = fresh + order
         save()
         val contents = folders.mapValues { (_, f) -> f.apps.mapNotNull(byKey::get).filter { it.key !in hidden } }
         val home = order.mapNotNull { key ->
@@ -207,6 +208,17 @@ class LayoutStore(context: Context) {
 }
 
 /** First-run arrangement: streaming apps first, the TV's own utilities last. */
+
+/** Display-name order for apps that have no stronger placement rule. */
+internal object AppLabels {
+    private val collator = object : ThreadLocal<Collator>() {
+        override fun initialValue() = Collator.getInstance()
+    }
+    val comparator = Comparator<String> { left, right ->
+        collator.get()!!.compare(left, right).takeUnless { it == 0 } ?: left.compareTo(right)
+    }
+}
+
 private object Defaults {
     private val preferred = listOf(
         "com.ktcp.video",                  // 云视听极光
@@ -214,19 +226,29 @@ private object Defaults {
         "com.cibn.tv",                     // CIBN 酷喵
         "com.hunantv.license",             // 芒果 TV
         "com.xiaodianshi.tv.yst",          // 云视听小电视
+        "blbl.cat3399",
+        "com.fongmi.android.tv",
+        "com.github.tvbox.osc.tk",
+        "com.quark.yun.tv",
+        "com.amazing.cloudisk.tv",
+        "net.yonsm.televe",
+        "net.yonsm.tukulu",
+        "com.github.neithern.tuku",
+
         "com.netflix.ninja",
         "com.google.android.youtube.tv",
+        "org.smarttube.stable",
         "com.apple.atve.androidtv.appletv",
         "com.disney.disneyplus",
         "com.amazon.amazonvideo.livingroom",
         "com.hbo.hbonow",
         "com.spotify.tv.android",
         "com.mitv.mivideoplayer",
-        "com.quark.yun.tv",
     )
 
     private val utilities = listOf(
         "com.xiaomi.mitv.settings",
+        "com.sony.dtv.smarthelp",
         "com.android.tv.settings",
         "com.xiaomi.mitv.tvmanager",
         "com.mitv.tvhome",
@@ -235,13 +257,17 @@ private object Defaults {
     )
 
     val comparator = compareBy<AppEntry>(
-        { preferred.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } },
+        { if (it.removable) 0 else 1 },
+        // All launcher entries in one APK share its preferred position.
+        { preferred.indexOf(it.component.packageName).let { i -> if (i < 0) Int.MAX_VALUE else i } },
         { if (it.key in utilities || it.key.startsWith("com.android.")) 1 else 0 },
         { utilities.indexOf(it.key) },
-        { it.label.lowercase() },
-    )
+    ).thenComparator { left, right -> AppLabels.comparator.compare(left.label, right.label) }
+        .thenBy { it.key }
 
     fun hidden(installed: Set<String>): Set<String> = buildSet {
+        // The system provisioning activity is not a normal launcher app.
+        if ("com.android.provision" in installed) add("com.android.provision")
         // Xiaomi's own settings app covers everything AOSP settings does, and more.
         if ("com.xiaomi.mitv.settings" in installed) add("com.android.tv.settings")
     }
