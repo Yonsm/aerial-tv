@@ -1086,6 +1086,7 @@ fun HomeScreen(
             onDismiss = { vm.overlay = Overlay.ControlCenter() },
             hiddenCount = vm.hiddenApps.size,
             onHiddenApps = { vm.whenUnlocked { vm.overlay = Overlay.HiddenApps } },
+            onResetOrder = { vm.whenUnlocked { vm.resetAppOrder() } },
             onKids = vm::setUpKidsMode,
             onStartScreensaver = {
                 vm.overlay = Overlay.None

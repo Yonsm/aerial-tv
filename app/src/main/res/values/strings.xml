@@ -308,4 +308,17 @@
     <string name="kids_blocked">%s is not allowed here</string>
     <string name="kids_warn">%d min of TV left</string>
     <string name="kids_warn_break">A break in %d min</string>
+    <string name="cc_power">Power</string>
+    <string name="cc_power_unavailable">Could not open the system power menu. Make sure Aerial Home Guard is enabled.</string>
+    <string name="app_name_iqiyi"></string>
+    <string name="app_name_youku"></string>
+    <string name="app_name_bilibili_tv"></string>
+    <string name="app_name_blbl"></string>
+    <string name="app_name_youtube"></string>
+    <string name="app_name_smarttube"></string>
+    <string name="app_name_fongmi"></string>
+    <string name="st_reset_order">App Order</string>
+    <string name="st_reset_order_hint">Restore the default order, including apps installed later. Folders and hidden apps are kept.</string>
+    <string name="st_reset_order_action">Restore Default</string>
+    <string name="st_reset_order_done">Default app order restored</string>
 </resources>

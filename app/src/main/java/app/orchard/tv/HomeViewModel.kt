@@ -352,7 +352,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun arrange() {
+    private fun arrange(resetOrder: Boolean = false) {
         // Pinned TV inputs share the grid, order and hiding with the apps.
         val pinned = sources.filter { it.id in AerialSettings.pinnedSources }.map { sourceEntry(context, it) }
         AppCatalog.pinnedSources = pinned
@@ -365,6 +365,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         )
         // Names typed on the phone page stand in for the apps' own, everywhere Home shows one.
         val named = all.map { e -> AppNames.of(e.key)?.let { e.copy(label = it) } ?: e }
+        if (resetOrder) store.resetOrder(named + pinned)
         val arrangement = store.arrange(named + pinned) { folder, inside ->
             val shown = inside.take(9).map { it.art }
             val art = folderArt[folder.id]?.takeIf { (made, _) -> made.size == shown.size && made.indices.all { made[it] === shown[it] } }?.second
@@ -636,6 +637,12 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun whenUnlocked(action: () -> Unit) {
         if (!AerialSettings.locked) action()
         else overlay = Overlay.Pin(PinMode.Unlock) { overlay = Overlay.None; action() }
+    }
+
+    fun resetAppOrder() {
+        if (!loaded) return
+        arrange(resetOrder = true)
+        notify(context.getString(R.string.st_reset_order_done), Glyph.Move)
     }
 
     fun hide(key: String) {
