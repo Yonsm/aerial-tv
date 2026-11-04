@@ -118,6 +118,7 @@ fun WallpaperSheet(
     onDismiss: () -> Unit,
     hiddenCount: Int,
     onHiddenApps: () -> Unit,
+    onResetOrder: () -> Unit,
     onStartScreensaver: () -> Unit,
     onPin: (on: Boolean) -> Unit,
     /** Kids and Elders mode's setup (behind the PIN). */
@@ -227,6 +228,9 @@ fun WallpaperSheet(
                             Glyph.ChevronRight,
                             onHiddenApps,
                         )
+                    }
+                    SettingRow(R.string.st_reset_order, stringResource(R.string.st_reset_order_hint), note) {
+                        ActionChip(stringResource(R.string.st_reset_order_action), Glyph.Move, onResetOrder)
                     }
                 }
                 Spacer(Modifier.height(10.dp))

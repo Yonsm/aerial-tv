@@ -414,6 +414,7 @@ class Personalize(
     private val onWallpaper: (String) -> Unit,
     private val onLayout: () -> Unit,
     private val onHidden: () -> Unit,
+    private val onResetOrder: () -> Unit,
     private val onSaverNow: () -> Unit,
     private val onPin: (Boolean) -> Unit,
     private val onKids: () -> Unit = {},
@@ -515,6 +516,9 @@ class Personalize(
             val hidden = Chip(context, if (hiddenCount == 0) string(R.string.st_hidden_none) else context.getString(R.string.st_hidden_count, hiddenCount), { false }, Glyph.ChevronRight)
                 .apply { action = onHidden }
             settingRow(R.string.st_hidden_apps, string(R.string.st_hidden_apps_hint), listOf(hidden))
+            val resetOrder = Chip(context, string(R.string.st_reset_order_action), { false }, Glyph.Move)
+                .apply { action = onResetOrder }
+            settingRow(R.string.st_reset_order, string(R.string.st_reset_order_hint), listOf(resetOrder))
         }
         col.add(space(context, 10f))
         group {

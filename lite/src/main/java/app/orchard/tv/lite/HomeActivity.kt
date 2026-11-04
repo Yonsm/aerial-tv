@@ -298,8 +298,9 @@ class HomeActivity : Activity(), HomeView.Host {
     }
 
     /** Home's tiles, as the full app's HomeViewModel.arrange: names from the phone page first. */
-    private fun arrange() {
+    private fun arrange(resetOrder: Boolean = false) {
         val named = all.map { e -> AppNames.of(e.key)?.let(e::named) ?: e }
+        if (resetOrder) layout.resetOrder(named)
         val arranged = layout.arrange(named) { folder, inside -> folderEntry(folder, folderTile(folder, inside)) }
         folderApps = arranged.folders
         hiddenApps = arranged.hidden
@@ -511,6 +512,14 @@ class HomeActivity : Activity(), HomeView.Host {
             },
             onLayout = { home.applySettings(); showWeather(); refaceIfResized() },
             onHidden = { whenUnlocked(::openHidden) },
+            onResetOrder = {
+                whenUnlocked {
+                    if (all.isNotEmpty()) {
+                        arrange(resetOrder = true)
+                        Toast.makeText(this, R.string.st_reset_order_done, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
             onSaverNow = { closeAll(); showSaver() },
             onPin = { on ->
                 if (on) showPanel(PinPad(this, ::closePanel, PinPad.Mode.Create) { closePanel(); refreshPersonalize() }, keepBelow = true)

@@ -300,4 +300,8 @@
     <string name="kids_blocked">«%s» здесь недоступно</string>
     <string name="kids_warn">Осталось %d мин</string>
     <string name="kids_warn_break">Перерыв через %d мин</string>
+    <string name="st_reset_order">Порядок приложений</string>
+    <string name="st_reset_order_hint">Восстановить порядок по умолчанию, включая приложения, установленные позже. Папки и скрытые приложения сохраняются.</string>
+    <string name="st_reset_order_action">По умолчанию</string>
+    <string name="st_reset_order_done">Порядок по умолчанию восстановлен</string>
 </resources>

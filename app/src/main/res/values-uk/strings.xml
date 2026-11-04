@@ -300,4 +300,8 @@
     <string name="kids_blocked">«%s» тут недоступний</string>
     <string name="kids_warn">Лишилося %d хв</string>
     <string name="kids_warn_break">Перерва за %d хв</string>
+    <string name="st_reset_order">Порядок застосунків</string>
+    <string name="st_reset_order_hint">Відновити типовий порядок, включно із застосунками, встановленими пізніше. Папки та приховані застосунки зберігаються.</string>
+    <string name="st_reset_order_action">Типовий порядок</string>
+    <string name="st_reset_order_done">Типовий порядок відновлено</string>
 </resources>

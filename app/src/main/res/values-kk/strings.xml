@@ -300,4 +300,8 @@
     <string name="kids_blocked">«%s» мұнда қолжетімсіз</string>
     <string name="kids_warn">%d мин қалды</string>
     <string name="kids_warn_break">%d минуттан кейін үзіліс</string>
+    <string name="st_reset_order">Қолданбалар реті</string>
+    <string name="st_reset_order_hint">Кейін орнатылған қолданбаларды қоса, әдепкі ретті қалпына келтіру. Қалталар мен жасырылған қолданбалар сақталады.</string>
+    <string name="st_reset_order_action">Әдепкі рет</string>
+    <string name="st_reset_order_done">Әдепкі рет қалпына келтірілді</string>
 </resources>
