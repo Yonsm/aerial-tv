@@ -1120,6 +1120,7 @@ fun HomeScreen(
                 else if (on) AerialSettings.chooseHomeLocked(true)
                 else vm.whenUnlocked { AerialSettings.chooseHomeLocked(false); vm.overlay = Overlay.Wallpaper }
             },
+            onResetOrder = { vm.whenUnlocked { vm.resetAppOrder() } },
             onKids = vm::setUpKidsMode,
             onStartScreensaver = {
                 vm.overlay = Overlay.None
