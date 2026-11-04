@@ -323,4 +323,8 @@
     <string name="kids_blocked">「%s」不在这个模式里</string>
     <string name="kids_warn">还能看 %d 分钟</string>
     <string name="kids_warn_break">%d 分钟后休息一下</string>
+    <string name="st_reset_order">应用排序</string>
+    <string name="st_reset_order_hint">恢复默认顺序，包括后来安装的应用。保留文件夹和隐藏的应用。</string>
+    <string name="st_reset_order_action">恢复默认排序</string>
+    <string name="st_reset_order_done">已恢复默认排序</string>
 </resources>

@@ -57,6 +57,21 @@ class LayoutStore(context: Context) {
 
     fun folders(): List<Folder> = order.mapNotNull(::folderOf)
 
+    /** Rebuilds every order from defaults, keeping folder membership and hidden apps. */
+    fun resetOrder(all: List<AppEntry>) {
+        val sorted = all.sortedWith(Defaults.comparator).map { it.key }
+        val rank = sorted.withIndex().associate { it.value to it.index }
+        folders = folders.mapValues { (_, folder) ->
+            folder.copy(apps = folder.apps.sortedWith(compareBy<String> { rank[it] ?: Int.MAX_VALUE }.thenBy { it }))
+        }
+        val holders = HashMap<String, String>()
+        folders.values.forEach { folder -> folder.apps.forEach { holders[it] = folder.key } }
+        // A folder takes the default position of its first app; empty folders remain available.
+        order = (sorted.map { holders[it] ?: it } + folders.values.map { it.key }).distinct()
+        initialized = true
+        save()
+    }
+
     /**
      * The apps behind Home's first [tiles] tiles in the saved order, a folder's apps (those its
      * picture shows) for a folder: what a cold start loads before the rest. Apps not [installed]

@@ -429,6 +429,7 @@ class Personalize(
     private val onLayout: () -> Unit,
     private val onHidden: () -> Unit,
     private val onHomeLock: (Boolean) -> Unit,
+    private val onResetOrder: () -> Unit,
     private val onSaverNow: () -> Unit,
     private val onPin: (Boolean) -> Unit,
     private val onKids: () -> Unit = {},
@@ -545,6 +546,9 @@ class Personalize(
             settingRow(R.string.st_hidden_apps, string(R.string.st_hidden_apps_hint), listOf(hidden))
             choices(R.string.st_home_lock, string(R.string.st_home_lock_hint), listOf(false to R.string.st_off, true to R.string.st_on),
                 LiteSettings.homeLocked) { if (it != LiteSettings.homeLocked) onHomeLock(it) }
+            val resetOrder = Chip(context, string(R.string.st_reset_order_action), { false }, Glyph.Move)
+                .apply { action = onResetOrder }
+            settingRow(R.string.st_reset_order, string(R.string.st_reset_order_hint), listOf(resetOrder))
         }
         col.add(space(context, 10f))
         group {
