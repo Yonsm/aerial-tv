@@ -316,4 +316,18 @@
     <string name="kids_blocked">«%s» здесь недоступно</string>
     <string name="kids_warn">Осталось %d мин</string>
     <string name="kids_warn_break">Перерыв через %d мин</string>
+    <string name="cc_power">Питание</string>
+    <string name="cc_power_unavailable">Не удалось открыть системное меню питания. Убедитесь, что Aerial Home Guard включён.</string>
+    <string name="app_name_iqiyi"></string>
+    <string name="app_name_youku"></string>
+    <string name="app_name_bilibili_tv"></string>
+    <string name="app_name_blbl"></string>
+    <string name="app_name_youtube"></string>
+    <string name="app_name_smarttube"></string>
+    <string name="app_name_fongmi"></string>
+    <string name="app_name_tvbox"></string>
+    <string name="st_reset_order">Порядок приложений</string>
+    <string name="st_reset_order_hint">Восстановить порядок по умолчанию, включая приложения, установленные позже. Папки и скрытые приложения сохраняются.</string>
+    <string name="st_reset_order_action">По умолчанию</string>
+    <string name="st_reset_order_done">Порядок по умолчанию восстановлен</string>
 </resources>

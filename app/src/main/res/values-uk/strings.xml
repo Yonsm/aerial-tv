@@ -316,4 +316,18 @@
     <string name="kids_blocked">«%s» тут недоступний</string>
     <string name="kids_warn">Лишилося %d хв</string>
     <string name="kids_warn_break">Перерва за %d хв</string>
+    <string name="cc_power">Живлення</string>
+    <string name="cc_power_unavailable">Не вдалося відкрити системне меню живлення. Переконайтеся, що Aerial Home Guard увімкнено.</string>
+    <string name="app_name_iqiyi"></string>
+    <string name="app_name_youku"></string>
+    <string name="app_name_bilibili_tv"></string>
+    <string name="app_name_blbl"></string>
+    <string name="app_name_youtube"></string>
+    <string name="app_name_smarttube"></string>
+    <string name="app_name_fongmi"></string>
+    <string name="app_name_tvbox"></string>
+    <string name="st_reset_order">Порядок застосунків</string>
+    <string name="st_reset_order_hint">Відновити типовий порядок, включно із застосунками, встановленими пізніше. Папки та приховані застосунки зберігаються.</string>
+    <string name="st_reset_order_action">Типовий порядок</string>
+    <string name="st_reset_order_done">Типовий порядок відновлено</string>
 </resources>
