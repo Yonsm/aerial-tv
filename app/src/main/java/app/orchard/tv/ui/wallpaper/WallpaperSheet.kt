@@ -120,6 +120,7 @@ fun WallpaperSheet(
     hiddenCount: Int,
     onHiddenApps: () -> Unit,
     onHomeLock: (on: Boolean) -> Unit,
+    onResetOrder: () -> Unit,
     onStartScreensaver: () -> Unit,
     onPin: (on: Boolean) -> Unit,
     /** Kids and Elders mode's setup (behind the PIN). */
@@ -249,6 +250,9 @@ fun WallpaperSheet(
                         listOf(false to R.string.st_off, true to R.string.st_on),
                         AerialSettings.homeLocked, onHomeLock,
                     )
+                    SettingRow(R.string.st_reset_order, stringResource(R.string.st_reset_order_hint), note) {
+                        ActionChip(stringResource(R.string.st_reset_order_action), Glyph.Move, onResetOrder)
+                    }
                 }
                 Spacer(Modifier.height(10.dp))
                 Group { note ->
