@@ -23,8 +23,8 @@ class LayoutStoreTest {
     private val art = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888).asImageBitmap()
         .let { TileArt(it, null, Rect.Zero, Color.Black, it) }
 
-    private fun app(pkg: String, label: String = pkg.substringAfterLast('.')) =
-        AppEntry(pkg, label, ComponentName(pkg, "$pkg.Main"), leanback = true, removable = true, art = art)
+    private fun app(pkg: String, label: String = pkg.substringAfterLast('.'), removable: Boolean = true) =
+        AppEntry(pkg, label, ComponentName(pkg, "$pkg.Main"), leanback = true, removable = removable, art = art)
 
     private val a = app("test.a")
     private val b = app("test.b")
@@ -74,13 +74,13 @@ class LayoutStoreTest {
         assertEquals(listOf("test.d", "test.a", "test.b", "test.c"), LayoutStore(context).home())
     }
 
-    @Test fun newAppsJoinAtTheEndAndMissingOnesKeepTheirPlace() {
+    @Test fun newAppsJoinAtTheFrontAndMissingOnesKeepTheirPlace() {
         val s = store()
         s.move("test.d", "test.a")
         // b is updating: gone for now, back in its place after.
         assertEquals(listOf("test.d", "test.a", "test.c"), s.home(listOf(a, c, d)))
         val e = app("test.e")
-        assertEquals(listOf("test.d", "test.a", "test.b", "test.c", "test.e"), s.home(installed + e))
+        assertEquals(listOf("test.e", "test.d", "test.a", "test.b", "test.c"), s.home(installed + e))
     }
 
     @Test fun aNewFolderTakesTheAppsPlace() {
@@ -144,9 +144,27 @@ class LayoutStoreTest {
     @Test fun firstRunPutsStreamingFirstAndSettingsLast() {
         val youtube = app("com.google.android.youtube.tv", "YouTube")
         val settings = app("com.android.tv.settings", "Settings")
-        val other = app("test.other", "Another")
+        val other = app("test.other", "阿里")
         val home = LayoutStore(context).home(listOf(settings, other, youtube))
         assertEquals(listOf(youtube.key, other.key, settings.key), home)
+    }
+
+    @Test fun firstRunUsesLocalizedLabelFallback() {
+        val alpha = app("test.alpha", "alpha")
+        val bravo = app("test.bravo", "Bravo")
+        val zulu = app("test.zulu", "Zulu")
+
+        assertEquals(
+            listOf(alpha.key, bravo.key, zulu.key),
+            LayoutStore(context).home(listOf(zulu, bravo, alpha)),
+        )
+    }
+
+    @Test fun systemAppsUseTheSameLocalizedFallback() {
+        val zulu = app("test.system.zulu", "Zulu", removable = false)
+        val alpha = app("test.system.alpha", "Alpha", removable = false)
+
+        assertEquals(listOf(alpha.key, zulu.key), LayoutStore(context).home(listOf(zulu, alpha)))
     }
 
     @Test fun firstRunHidesAospSettingsBesideXiaomis() {
